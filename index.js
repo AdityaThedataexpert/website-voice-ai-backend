@@ -9,8 +9,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 🔹 Website Scraper Function (UPDATED)
-async function nodescrapeWebsite(url) {
+// 🔹 Website Scraper Function
+async function scrapeWebsite(url) {
   try {
     const response = await axios.get(url, {
       headers: {
@@ -27,23 +27,21 @@ async function nodescrapeWebsite(url) {
 
     $("h1, h2, h3, p, li").each((i, el) => {
       const content = $(el).text().trim();
-      if (content) {
-        text += content + "\n";
-      }
+      if (content) text += content + "\n";
     });
 
     if (!text) {
-      throw new Error("No readable content found on website");
+      throw new Error("No readable content found");
     }
 
-    return text.substring(0, 12000); // limit for LLM
+    return text.substring(0, 12000);
   } catch (error) {
     console.error("SCRAPER ERROR:", error.message);
     throw error;
   }
 }
 
-// 🔹 API Endpoint
+// 🔹 Scrape API
 app.post("/scrape", async (req, res) => {
   try {
     const { url } = req.body;
@@ -55,18 +53,14 @@ app.post("/scrape", async (req, res) => {
       });
     }
 
-    console.log("Scraping URL:", url);
-
+    console.log("Scraping:", url);
     const content = await scrapeWebsite(url);
 
     res.json({
       status: "success",
       content
     });
-
   } catch (error) {
-    console.error("API ERROR:", error.message);
-
     res.status(500).json({
       status: "error",
       message: error.message
@@ -74,13 +68,14 @@ app.post("/scrape", async (req, res) => {
   }
 });
 
-// 🔹 Health Check (Optional but useful)
+// 🔹 Health Check
 app.get("/", (req, res) => {
   res.send("Website Voice AI Backend is running 🚀");
 });
 
-// 🔹 Start Server
-const PORT = 3000;
+// 🔹 IMPORTANT: Render PORT binding
+const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
